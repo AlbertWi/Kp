@@ -17,7 +17,7 @@ use Carbon\Carbon;
 class PurchaseController extends Controller
 {
     public function index()
-{
+    {
     $user = auth()->user();
     if ($user->role === 'kepala_toko') {
         $purchases = Purchase::where('branch_id', $user->branch_id)->latest()->get();
@@ -25,14 +25,13 @@ class PurchaseController extends Controller
         $purchases = Purchase::latest()->get();
     }
     return view('kepala_toko.purchases.index', compact('purchases'));
-}
+    }
     public function create()
     {
         $suppliers = Supplier::all();
-        $products = Product::all();
+        $products = Product::orderBy('name')->get();
         return view('admin.purchases.create', compact('suppliers', 'products'));
     }
-
     public function store(Request $request)
     {
         $normalizedItems = [];

@@ -48,8 +48,8 @@
                                 <td>1 unit</td>
                                 <td>
                                     <input type="text" name="imeis[{{ $inventory->id }}]" 
-                                           value="{{ old("imeis.$inventory->id", $inventory->imei) }}"
-                                           class="form-control" placeholder="Masukkan IMEI">
+                                        value="{{ old("imeis.$inventory->id", $inventory->imei) }}"
+                                        class="form-control" placeholder="Masukkan IMEI">
                                 </td>
                                 <td>
                                     <span class="badge bg-{{ $inventory->status == 'in_stock' ? 'success' : 'warning' }}">
@@ -80,3 +80,27 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const imeiInputs = document.querySelectorAll('input[name^="imeis"]');
+
+    imeiInputs.forEach(function (input) {
+        input.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // cegah submit
+                // opsional: pindah ke field berikutnya
+                const inputs = Array.from(imeiInputs);
+                const currentIndex = inputs.indexOf(e.target);
+                const nextInput = inputs[currentIndex + 1];
+                if (nextInput) {
+                    nextInput.focus();
+                }
+            }
+        });
+    });
+});
+</script>
+@endpush
+

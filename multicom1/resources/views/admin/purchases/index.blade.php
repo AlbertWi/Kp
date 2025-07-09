@@ -3,68 +3,136 @@
 @section('title', 'Data Pembelian')
 
 @section('content')
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Data Pembelian</h5>
-        <a href="{{ route('purchases.create') }}" class="btn btn-primary btn-sm">+ Tambah Pembelian</a>
-    </div>
-    <div class="card-body p-0">
-        <table class="table table-bordered m-0">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Supplier</th>
-                    <th>Total</th>
-                    <th>Nama Produk</th>
-                    <th>Harga</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($purchases as $purchase)
-                    @php
-                        $isComplete = true;
-                        foreach ($purchase->items as $item) {
-                            foreach ($item->inventoryItems as $inv) {
-                                if (is_null($inv->imei)) {
-                                    $isComplete = false;
-                                    break 2;
-                                }
-                            }
-                        }
-                    @endphp
-                    <tr>
-                        <td>{{ $purchase->created_at->format('d-m-Y') }}</td>
-                        <td>{{ $purchase->supplier->name }}</td>
-                        <td>{{ $purchase->items->sum('qty') }}</td>
-                        <td>
-                            <ul class="mb-0">
-                                @foreach($purchase->items as $item)
-                                    <li>{{ $item->product->name }}</li>
-                                @endforeach
-                            </ul>
-                        </td>
-                        <td>
-                            <ul class="mb-0">
-                                @foreach($purchase->items as $item)
-                                    <li>Rp{{ number_format($item->price, 0, ',', '.') }}</li>
-                                @endforeach
-                            </ul>
-                        </td>
-                        <td>
-                            <a href="{{ route('purchases.show', $purchase->id) }}"
-                               class="btn btn-sm {{ $isComplete ? 'btn-success' : 'btn-danger' }}">
-                                Detail
-                            </a>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="text-center">Belum ada data pembelian</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+<div class="container">
+    <h4 class="mb-4">Data Pembelian</h4>
+
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form action="{{ route('purchases.store') }}" method="POST">
+        @csrf
+
+        <div class="mb-3">
+            <label for="supplier_id" class="form-label"><strong>Supplier</strong></label>
+            <select name="supplier_id" id="supplier_id" class="form-control">
+                <option value="">-- Pilih Supplier --</option>
+                @foreach ($suppliers as $supplier)
+                    <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                        {{ $supplier->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Tanggal</label>
+            <input type="text" class="form-control" value="{{ \Carbon\Carbon::now()->format('d-m-Y') }}" readonly>
+        </div>
+
+        <hr>
+        <h5 class="mb-3">Produk</h5>
+
+        <div id="product-wrapper">
+            @php $oldItems = old('items', [ [] ]); @endphp
+            @foreach ($oldItems as $i => $item)
+                <div class="row mb-2 product-row">
+                    <div class="col-md-4">
+                        <select name="items[{{ $i }}][product_id]" class="form-control">
+                            <option value="">-- Pilih Produk --</option>
+                            @foreach ($products as $product)
+                                <option value="{{ $product->id }}" {{ (isset($item['product_id']) && $item['product_id'] == $product->id) ? 'selected' : '' }}>
+                                    {{ $product->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" name="items[{{ $i }}][qty]" class="form-control" placeholder="Qty" min="1" value="{{ $item['qty'] ?? '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" name="items[{{ $i }}][price]" class="form-control price-input" placeholder="Harga Satuan" value="{{ isset($item['price']) ? number_format($item['price'], 0, ',', '.') : '' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger remove-row">Hapus</button>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <button type="button" id="add-product" class="btn btn-secondary mt-2">+ Tambah Produk</button>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Simpan Pembelian</button>
+        </div>
+    </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    let index = {{ count(old('items', [ [] ])) }};
+
+    document.getElementById('add-product').addEventListener('click', function () {
+        const wrapper = document.getElementById('product-wrapper');
+
+        const row = document.createElement('div');
+        row.classList.add('row', 'mb-2', 'product-row');
+
+        row.innerHTML = `
+            <div class="col-md-4">
+                <select name="items[${index}][product_id]" class="form-control">
+                    <option value="">-- Pilih Produk --</option>
+                    @foreach ($products as $product)
+                        <option value="{{ $product->id }}">{{ $product->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="items[${index}][qty]" class="form-control" placeholder="Qty" min="1">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="items[${index}][price]" class="form-control price-input" placeholder="Harga Satuan">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger remove-row">Hapus</button>
+            </div>
+        `;
+
+        wrapper.appendChild(row);
+        index++;
+    });
+
+    document.getElementById('product-wrapper').addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-row')) {
+            e.target.closest('.product-row').remove();
+        }
+    });
+
+    // Format angka harga saat input
+    function formatPriceInput(input) {
+        input.value = input.value
+            .replace(/[^0-9]/g, '')
+            .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('price-input')) {
+            formatPriceInput(e.target);
+        }
+    });
+
+    // Bersihkan koma sebelum submit
+    document.querySelector('form').addEventListener('submit', function() {
+        document.querySelectorAll('.price-input').forEach(function(input) {
+            input.value = input.value.replace(/,/g, '');
+        });
+    });
+</script>
+@endpush
