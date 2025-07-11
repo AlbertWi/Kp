@@ -40,15 +40,14 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware(['auth', 'role:owner,kepala_toko,admin'])->group(function () {
-        Route::get('/stok-cabang', [\App\Http\Controllers\BranchStockController::class, 'index'])->name('stok-cabang');
-        Route::get('/stok/export', [\App\Http\Controllers\BranchStockController::class, 'exportStok'])->name('export-stok');
+        Route::get('/stok-cabang', [BranchStockController::class, 'index'])->name('stok-cabang');
     });
     // === OWNER ===
     Route::middleware('role:owner')->group(function () {
         Route::resource('inventory', InventoryItemController::class);
         Route::resource('branches', BranchController::class);
         Route::resource('users', UserController::class);
-        Route::get('/laporan-penjualan', [\App\Http\Controllers\SaleController::class, 'laporanPenjualan'])->name('owner.laporan.penjualan');
+        Route::get('/laporan-penjualan', [SaleController::class, 'laporanPenjualan'])->name('owner.laporan.penjualan');
         Route::get('/sales/export-pdf', [SaleController::class, 'exportPdf'])->name('sales.export-pdf');
     });
 
@@ -75,6 +74,5 @@ Route::middleware('auth')->group(function () {
             ->name('stock-requests.approve');
         Route::post('stock-requests/{id}/reject', [StockRequestController::class, 'reject'])
             ->name('stock-requests.reject');
-
     });
 });

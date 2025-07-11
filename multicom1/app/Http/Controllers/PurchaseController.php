@@ -24,13 +24,13 @@ class PurchaseController extends Controller
     } else {
         $purchases = Purchase::latest()->get();
     }
-    return view('kepala_toko.purchases.index', compact('purchases'));
+    return view('purchases.index', compact('purchases'));
     }
     public function create()
     {
         $suppliers = Supplier::all();
         $products = Product::orderBy('name')->get();
-        return view('admin.purchases.create', compact('suppliers', 'products'));
+        return view('purchases.create', compact('suppliers', 'products'));
     }
     public function store(Request $request)
     {
@@ -119,7 +119,7 @@ class PurchaseController extends Controller
             'items.product',
             'items.inventoryItems.product'
         ])->findOrFail($id);
-        return view('admin.purchases.show', compact('purchase'));
+        return view('purchases.show', compact('purchase'));
     }
 
     public function saveImei(Request $request, Purchase $purchase)
