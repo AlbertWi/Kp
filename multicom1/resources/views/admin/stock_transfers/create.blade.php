@@ -78,6 +78,17 @@
 
 @push('scripts')
 <script>
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.name === 'imeis[]') {
+            e.preventDefault(); 
+            const imeiInputs = document.querySelectorAll('input[name="imeis[]"]');
+            const index = Array.from(imeiInputs).indexOf(e.target);
+            if (imeiInputs[index + 1]) {
+                imeiInputs[index + 1].focus();
+            }
+        }
+    });
+    // Tambah input IMEI
     document.getElementById('add-imei').addEventListener('click', function () {
         const newInput = `
             <div class="input-group mb-2">
@@ -89,10 +100,13 @@
         document.getElementById('imei-input-list').insertAdjacentHTML('beforeend', newInput);
     });
 
+    // Hapus input IMEI
     document.addEventListener('click', function (e) {
         if (e.target.classList.contains('remove-imei')) {
             e.target.closest('.input-group').remove();
         }
     });
 </script>
+
+
 @endpush
